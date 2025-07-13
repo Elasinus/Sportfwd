@@ -1,0 +1,368 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    background: #121212;
+    font-family: 'Segoe UI', sans-serif;
+    color: #fff;
+  }
+
+  .profile-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    background: #1c1c1e;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+
+  .cover-image {
+    position: relative;
+  }
+
+  .cover-image img {
+    width: 100%;
+    height: 240px;
+    object-fit: cover;
+  }
+
+  .edit-cover-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+
+  .profile-header {
+    display: flex;
+    align-items: center;
+    padding: 1.5rem;
+    position: relative;
+    background: #2c2c2e;
+  }
+
+  .profile-pic-wrapper {
+    position: relative;
+    margin-right: 1.5rem;
+  }
+
+  .profile-pic {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid white;
+  }
+
+  .edit-pic-btn {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 50%;
+    font-size: 0.9rem;
+    text-decoration: none;
+  }
+
+  .profile-info h2 {
+    margin: 0;
+    font-size: 1.8rem;
+  }
+
+  .profile-info .role {
+    color: #aaa;
+    font-size: 1rem;
+    margin-top: 0.3rem;
+  }
+
+  .edit-profile-btn {
+    position: absolute;
+    right: 1.5rem;
+    top: 1.5rem;
+    background: #FFA500;
+    color: black;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: bold;
+  }
+
+  .bio-section {
+    padding: 1rem 1.5rem;
+    background: #2c2c2e;
+    border-top: 1px solid #333;
+  }
+
+  .bio-section h3 {
+    margin-bottom: 0.5rem;
+    color: #FFA500;
+  }
+
+  /* COLLAPSIBLE INFO */
+  details.info-section {
+    margin: 1rem 1.5rem;
+    background: #1c1c1e;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    color: white;
+  }
+
+  details.info-section summary {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #FFA500;
+    cursor: pointer;
+    outline: none;
+  }
+
+  details.info-section summary::-webkit-details-marker {
+    display: none;
+  }
+
+  details.info-section summary::before {
+    content: "▶";
+    margin-right: 10px;
+    transition: transform 0.2s ease;
+  }
+
+  details[open] summary::before {
+    transform: rotate(90deg);
+  }
+
+  .info-box ul {
+    list-style: none;
+    margin: 1rem 0 0 0;
+    padding: 0;
+  }
+
+  .info-box li {
+    margin-bottom: 0.4rem;
+  }
+
+  .info-box li strong {
+    color: #aaa;
+    display: inline-block;
+    min-width: 120px;
+  }
+
+  /* TABS */
+  .tabs-section {
+    padding: 1rem 1.5rem;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .tab-button {
+    background: none;
+    border: 1px solid #FFA500;
+    color: #FFA500;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  .tab-button.active, .tab-button:hover {
+    background: #FFA500;
+    color: black;
+  }
+
+  .tab-content {
+    background: #2c2c2e;
+    padding: 1rem;
+    border-radius: 10px;
+  }
+
+  .post-box {
+    border-bottom: 1px solid #444;
+    padding: 1rem 0;
+  }
+
+  .post-box img {
+    max-width: 100%;
+    border-radius: 8px;
+    margin-top: 10px;
+  }
+
+  /* POST FORM */
+  .post-form {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: #2c2c2e;
+    border-radius: 30px;
+    padding: 1rem 1.5rem;
+    margin: 2rem 1.5rem;
+  }
+
+  .post-form img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+  }
+
+  .post-form form {
+    flex: 1;
+  }
+
+  .post-form input {
+    width: 100%;
+    border: none;
+    padding: 0.7rem 1rem;
+    background: #444;
+    color: white;
+    border-radius: 20px;
+    margin-bottom: 0.5rem;
+  }
+
+  .post-form button, .post-form label {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #FFA500;
+    font-size: 0.9rem;
+  }
+
+  .post-form label input {
+    display: none;
+  }
+</style>
+
+<div class="profile-container">
+  <!-- Cover Image -->
+  <div class="cover-image">
+    {% if profile.cover_image %}
+      <img src="{{ profile.cover_image.url }}" alt="Cover Image">
+    {% else %}
+      <img src="{% static 'images/default-cover.jpg' %}" alt="Cover Image">
+    {% endif %}
+    <a href="{% url 'edit_profile' %}" class="edit-cover-btn">✎</a>
+  </div>
+
+  <!-- Profile Info Section -->
+  <div class="profile-header">
+    <div class="profile-pic-wrapper">
+      {% if profile.profile_image %}
+        <img src="{{ profile.profile_image.url }}" alt="Profile Picture" class="profile-pic">
+      {% else %}
+        <img src="{% static 'images/default.png' %}" alt="Profile Picture" class="profile-pic">
+      {% endif %}
+      <a href="{% url 'edit_profile' %}" class="edit-pic-btn">✎</a>
+    </div>
+    <div class="profile-info">
+      <h2>{{ user.username }}</h2>
+      <p class="role">{{ profile.get_role_display }}</p>
+    </div>
+    <a href="{% url 'edit_profile' %}" class="edit-profile-btn">Edit Profile</a>
+  </div>
+
+  <!-- Bio -->
+  <div class="bio-section">
+    <h3>About</h3>
+    <p>{{ profile.bio|default:"No bio added yet." }}</p>
+  </div>
+
+  <!-- Collapsible Info Sections -->
+  <details class="info-section" open>
+    <summary>Stats</summary>
+    <div class="info-box">
+      <ul>
+        <li><strong>Followers:</strong> 0</li>
+        <li><strong>Following:</strong> 0</li>
+        <li><strong>Posts:</strong> {{ post_count|default:0 }}</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="info-section">
+    <summary>Sport Information</summary>
+    <div class="info-box">
+      <ul>
+        <li><strong>Sport:</strong> {{ profile.sport|default:"Not specified" }}</li>
+        <li><strong>Position:</strong> {{ profile.position|default:"Not specified" }}</li>
+        <li><strong>Level:</strong> {{ profile.level|default:"Not specified" }}</li>
+        <li><strong>Experience:</strong> {{ profile.experience|default:"0" }} years</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="info-section">
+    <summary>Academic Information</summary>
+    <div class="info-box">
+      <ul>
+        <li><strong>School:</strong> {{ profile.school }}</li>
+        <li><strong>Graduation Year:</strong> {{ profile.grad_year }}</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- Tabs for Posts -->
+  <div class="tabs-section">
+    <div class="tabs">
+      <button class="tab-button active" onclick="showTab('posts')">Posts</button>
+      <button class="tab-button" onclick="showTab('media')">Media</button>
+      <button class="tab-button" onclick="showTab('activity')">Activity</button>
+    </div>
+    <div class="tab-content" id="posts">
+      {% for post in posts %}
+        <div class="post-box">
+          <p>{{ post.content }}</p>
+          {% if post.image %}
+            <img src="{{ post.image.url }}" alt="Post image">
+          {% endif %}
+        </div>
+      {% empty %}
+        <div style="color:#aaa; text-align:center; padding:2rem;">You haven’t posted anything yet.</div>
+      {% endfor %}
+    </div>
+    <div class="tab-content" id="media" style="display:none;">
+      <p>Media uploads will be shown here.</p>
+    </div>
+    <div class="tab-content" id="activity" style="display:none;">
+      <p>User activity will be shown here.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Post Form -->
+<div class="post-form">
+  <img src="{{ profile.profile_image.url }}" alt="Profile">
+  <form method="POST" action="{% url 'create_post' %}" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input name="content" placeholder="Start a post">
+    <div style="display: flex; gap: 1rem;">
+      <label>🎥 Video<input type="file" name="video"></label>
+      <label>🖼️ Photo<input type="file" name="image"></label>
+      <button type="submit">✍️ Post</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  function showTab(tabId) {
+    const tabs = document.querySelectorAll('.tab-content');
+    tabs.forEach(tab => tab.style.display = 'none');
+    document.getElementById(tabId).style.display = 'block';
+
+    const buttons = document.querySelectorAll('.tab-button');
+    buttons.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+  }
+</script>
+{% endblock %}

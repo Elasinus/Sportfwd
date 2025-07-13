@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+  body {
+    background: #121212;
+    font-family: 'Segoe UI', sans-serif;
+  }
+
+  .edit-profile-form {
+    max-width: 600px;
+    margin: 2rem auto;
+    background: #1e1e1e;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 0 12px rgba(0,0,0,0.5);
+    color: white;
+  }
+
+  .edit-profile-form h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: #FFA500;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 0.3rem;
+    font-weight: bold;
+    color: #FFA500;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  input[type="file"],
+  textarea {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    margin-bottom: 1rem;
+    border: none;
+    border-radius: 8px;
+    background: #2a2a2a;
+    color: white;
+    font-size: 0.95rem;
+  }
+
+  textarea {
+    resize: vertical;
+  }
+
+  input[type="file"] {
+    padding: 0.4rem;
+    background: #2c2c2e;
+  }
+
+  button {
+    display: block;
+    width: 100%;
+    background: #FFA500;
+    color: black;
+    padding: 0.7rem;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+
+  button:hover {
+    background: #ffb733;
+  }
+</style>
+
+<div class="edit-profile-form">
+  <h2>Edit Profile</h2>
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <label for="profile_image">Profile Image:</label>
+    <input type="file" name="profile_image" id="profile_image">
+
+    <label for="cover_image">Cover Image:</label>
+    <input type="file" name="cover_image" id="cover_image">
+
+    <label for="bio">Bio:</label>
+    <textarea name="bio" id="bio" rows="4">{{ profile.bio }}</textarea>
+
+    <label for="sport">Sport:</label>
+    <input type="text" name="sport" id="sport" value="{{ profile.sport }}">
+
+    <label for="position">Position:</label>
+    <input type="text" name="position" id="position" value="{{ profile.position }}">
+
+    <label for="level">Level:</label>
+    <input type="text" name="level" id="level" value="{{ profile.level }}">
+
+    <label for="experience">Experience (years):</label>
+    <input type="number" name="experience" id="experience" value="{{ profile.experience }}">
+
+    <label for="school">School:</label>
+    <input type="text" name="school" id="school" value="{{ profile.school }}">
+
+    <label for="grad_year">Graduation Year:</label>
+    <input type="number" name="grad_year" id="grad_year" value="{{ profile.grad_year }}">
+
+    <button type="submit">💾 Save Changes</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Rajdhani', sans-serif;
+    background: #000;
+    color: #fff;
+  }
+
+  .auth-background {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .auth-background-img {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+  }
+
+  .auth-overlay {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    backdrop-filter: blur(2px);
+  }
+
+  .login-box {
+    background: white;
+    color: black;
+    padding: 2.5rem;
+    border-radius: 15px;
+    width: 360px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    text-align: center;
+  }
+
+  .login-box h2 {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.2rem;
+    text-align: left;
+  }
+
+  .form-group label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 0.3rem;
+  }
+
+  .form-group input {
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 25px;
+    font-size: 1rem;
+  }
+
+  .password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .password-wrapper input {
+    padding-right: 40px;
+  }
+
+  .toggle-password {
+    position: absolute;
+    right: 12px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: #888;
+    user-select: none;
+  }
+
+  .login-btn {
+    width: 100%;
+    padding: 0.7rem;
+    border: none;
+    border-radius: 25px;
+    background: linear-gradient(to right, #1e3c72, #2a5298);
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    transition: 0.3s ease;
+  }
+
+  .login-btn:hover {
+    background: linear-gradient(to right, #0f2027, #2c5364);
+  }
+
+  .forgot-link {
+    display: block;
+    margin-top: 0.8rem;
+    color: #007BFF;
+  }
+
+  .signup-text {
+    margin-top: 1.5rem;
+  }
+
+  .signup-link {
+    color: black;
+    border: 1px solid black;
+    padding: 0.3rem 1rem;
+    border-radius: 20px;
+    text-decoration: none;
+    font-weight: bold;
+    display: inline-block;
+    margin-top: 0.5rem;
+  }
+
+  .social-text {
+    margin-top: 1.5rem;
+  }
+
+  .social-icons a {
+    margin: 0 0.5rem;
+  }
+
+  .social-icons img {
+    width: 30px;
+    height: 30px;
+  }
+
+  .error {
+    color: red;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+</style>
+
+<div class="auth-background">
+  <img src="{% static 'images/loggin.gif' %}" alt="Login Background" class="auth-background-img">
+
+  <div class="auth-overlay">
+    <div class="login-box">
+      <h2>Login</h2>
+      {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+      <form method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+          {{ form.username.label_tag }}
+          {{ form.username }}
+        </div>
+
+        <div class="form-group password-toggle-group">
+          {{ form.password.label_tag }}
+          <div class="password-wrapper">
+            {{ form.password }}
+            <span class="toggle-password" onclick="togglePassword(this)">👁</span>
+          </div>
+        </div>
+
+        <button type="submit" class="login-btn">Login</button>
+      </form>
+
+      <a href="#" class="forgot-link">Forgot password?</a>
+
+      <p class="signup-text">New user?
+        <a href="{% url 'register' %}" class="signup-link">Signup Now</a>
+      </p>
+
+      <p class="social-text">May also signup with</p>
+      <div class="social-icons">
+        <a href="#"><img src="{% static 'icons/facebook.png' %}" alt="Facebook" /></a>
+        <a href="#"><img src="{% static 'icons/twitter.png' %}" alt="Twitter" /></a>
+        <a href="#"><img src="{% static 'icons/linkedin.png' %}" alt="LinkedIn" /></a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function togglePassword(el) {
+    const input = el.previousElementSibling;
+    input.type = input.type === "password" ? "text" : "password";
+    el.textContent = input.type === "password" ? "👁" : "🙈";
+  }
+</script>
+{% endblock %}
