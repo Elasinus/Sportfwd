@@ -1,11 +1,8 @@
-{% extends 'base.html' %}
-{% load static %}
-
-{% block content %}
+{% extends 'base.html' %} {% load static %} {% block content %}
 <style>
   body {
     background-color: #000;
-    font-family: 'Rajdhani', sans-serif;
+    font-family: "Rajdhani", sans-serif;
     margin: 0;
     padding: 0;
   }
@@ -34,7 +31,7 @@
   }
 
   .feed-sidebar h3 {
-    color: #FFA500;
+    color: #ffa500;
     margin-bottom: 1rem;
   }
 
@@ -46,7 +43,7 @@
   }
 
   .suggestion:hover {
-    color: #FFA500;
+    color: #ffa500;
     cursor: pointer;
   }
 
@@ -96,7 +93,7 @@
     padding: 1.2rem;
     margin-bottom: 1.5rem;
     border-radius: 12px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
     position: relative;
   }
 
@@ -133,7 +130,7 @@
   }
 
   .comments button {
-    background: #FFA500;
+    background: #ffa500;
     border: none;
     border-radius: 6px;
     padding: 0.4rem 0.8rem;
@@ -202,7 +199,7 @@
   }
 
   .pagination a {
-    color: #FFA500;
+    color: #ffa500;
     text-decoration: none;
     font-weight: bold;
   }
@@ -221,97 +218,138 @@
 
 <div class="feed-wrapper">
   <div class="feed-main">
-    <div class="post-form" style="display: flex; align-items: flex-start; gap: 1rem; background: #2c2c2e; border-radius: 12px; padding: 1rem;">
-      <img src="{{ profile.profile_image.url }}" alt="Profile" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin-top: 6px;">
-
-      <form method="POST" action="{% url 'create_post' %}" enctype="multipart/form-data" style="flex: 1;">
-        {% csrf_token %}
-
-        <input 
-          type="text" 
-          name="content" 
-          placeholder="What's on your mind?" 
-          style="width: 100%; padding: 0.6rem 1rem; border-radius: 20px; border: none; background: #444; color: white;"
+    <div class="post-form">
+      <img
+        src="{{ profile.profile_image.url }}"
+        alt="Profile"
+        style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover"
+      />
+      <div
+        style="
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        "
+      >
+        <div
+          style="
+            flex: 1;
+            padding: 0.6rem 1rem;
+            border-radius: 20px;
+            background: #444;
+            color: #888;
+            cursor: pointer;
+          "
+          onclick="window.location.href='{% url 'create_post' %}'"
         >
-        
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 0.8rem; flex-wrap: wrap;">
-          <label style="color: dodgerblue; cursor: pointer;">
-            📷 Image
-            <input type="file" name="image" accept="image/*" style="display: none;">
-          </label>
-
-          <label style="color: lightgreen; cursor: pointer;">
-            🎥 Video
-            <input type="file" name="video" accept="video/*" style="display: none;">
-          </label>
-
-          <button type="submit" style="background: none; border: none; color: orangered; font-weight: bold; cursor: pointer;">
-            ✍️ Post
-          </button>
+          What's on your mind?
         </div>
-      </form>
+        <a
+          href="{% url 'create_post' %}"
+          style="
+            background: none;
+            border: none;
+            color: orangered;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+          "
+        >
+          ✍️ Create Post
+        </a>
+      </div>
     </div>
-
 
     {% for post in page_obj %}
     <div class="post-box">
       <p><strong>{{ post.user.username }}</strong></p>
       <p>{{ post.content }}</p>
+
       {% if post.image %}
-        <img src="{{ post.image.url }}" style="max-width:100%; border-radius:8px;" />
+      <img
+        src="{{ post.image.url }}"
+        style="max-width: 100%; border-radius: 8px"
+      />
+      {% endif %} {% if post.video %}
+      <video
+        controls
+        style="max-width: 100%; border-radius: 8px; margin-top: 0.5rem"
+      >
+        <source src="{{ post.video.url }}" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
       {% endif %}
-      {% if post.video %}
-        <video controls style="max-width:100%; border-radius:8px; margin-top: 0.5rem;">
-          <source src="{{ post.video.url }}" type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
-      {% endif %}
+
       <small>{{ post.created_at|timesince }} ago</small>
+
       {% if post.user == request.user %}
-      <div style="margin-top: 0.5rem; display: flex; gap: 1rem; font-size: 0.9rem;">
-        <a href="{% url 'edit_post' post.id %}" style="color: dodgerblue; text-decoration: none;">✏️ Edit</a>
-        <form method="POST" action="{% url 'delete_post' post.id %}" style="display: inline;">
+      <div
+        style="margin-top: 0.5rem; display: flex; gap: 1rem; font-size: 0.9rem"
+      >
+        <a
+          href="{% url 'edit_post' post.id %}"
+          style="color: dodgerblue; text-decoration: none"
+          >✏️ Edit</a
+        >
+        <form
+          method="POST"
+          action="{% url 'delete_post' post.id %}"
+          style="display: inline"
+        >
           {% csrf_token %}
-          <button type="submit" onclick="return confirm('Are you sure?')" 
-                  style="background: none; border: none; color: crimson; cursor: pointer;">
+          <button
+            type="submit"
+            onclick="return confirm('Are you sure?')"
+            style="
+              background: none;
+              border: none;
+              color: crimson;
+              cursor: pointer;
+            "
+          >
             🗑️ Delete
           </button>
         </form>
       </div>
-    {% endif %}
-    
-    
+      {% endif %}
 
       <div class="post-actions">
         <form method="POST" action="{% url 'like_post' post.id %}">
           {% csrf_token %}
-          <button type="submit" style="background: none; border: none; color: white;">
-            {% if post.id in liked_post_ids %}
-              ❤️ Liked
-            {% else %}
-              🤍 Like
-            {% endif %}
+          <button
+            type="submit"
+            style="background: none; border: none; color: white"
+          >
+            {% if post.id in liked_post_ids %} ❤️ Liked {% else %} 🤍 Like {%
+            endif %}
           </button>
         </form>
       </div>
 
       <div class="comments">
         {% for comment in post.comments.all %}
-          <p><b>{{ comment.user.username }}</b>: {{ comment.content }}</p>
+        <p><b>{{ comment.user.username }}</b>: {{ comment.content }}</p>
         {% endfor %}
+
         <form method="POST" action="{% url 'comment_post' post.id %}">
           {% csrf_token %}
-          <input name="comment" placeholder="Add comment...">
+          <input name="comment" placeholder="Add comment..." />
           <button type="submit">Send</button>
         </form>
       </div>
     </div>
-    {% endfor %}
+    {% endif %} {% endfor %}
 
     <div class="pagination">
-      {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+      {% endif %}
       <span>Page {{ page_obj.number }}</span>
-      {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}">Next</a>
+      {% endif %}
     </div>
   </div>
 
@@ -326,15 +364,17 @@
 <script>
   function toggleDropdown(button) {
     const menu = button.nextElementSibling;
-    document.querySelectorAll('.dropdown-menu').forEach(m => {
-      if (m !== menu) m.style.display = 'none';
+    document.querySelectorAll(".dropdown-menu").forEach((m) => {
+      if (m !== menu) m.style.display = "none";
     });
-    menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    menu.style.display = menu.style.display === "block" ? "none" : "block";
   }
 
-  document.addEventListener('click', function(e) {
-    if (!e.target.closest('.dropdown')) {
-      document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest(".dropdown")) {
+      document
+        .querySelectorAll(".dropdown-menu")
+        .forEach((m) => (m.style.display = "none"));
     }
   });
 </script>

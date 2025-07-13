@@ -1,0 +1,266 @@
+{% extends 'base.html' %} {% load static %} {% block content %}
+<style>
+  body {
+    background-color: #000;
+    font-family: "Rajdhani", sans-serif;
+    margin: 0;
+    padding: 0;
+    color: #fff;
+  }
+
+  .create-post-container {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #1f1f21;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .create-post-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #ffa500;
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    color: #ffa500;
+  }
+
+  .form-group textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 1rem;
+    background: #2c2c2e;
+    border: 1px solid #444;
+    border-radius: 8px;
+    color: white;
+    font-family: inherit;
+    font-size: 1rem;
+    resize: vertical;
+    box-sizing: border-box;
+  }
+
+  .form-group textarea:focus {
+    outline: none;
+    border-color: #ffa500;
+  }
+
+  .file-input-group {
+    margin-bottom: 1rem;
+  }
+
+  .file-input-group label {
+    display: inline-block;
+    padding: 0.8rem 1.5rem;
+    background: #ffa500;
+    color: #000;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+  }
+
+  .file-input-group label:hover {
+    background: #d99b00;
+  }
+
+  .file-input-group input[type="file"] {
+    display: none;
+  }
+
+  .preview-container {
+    margin-top: 1rem;
+    text-align: center;
+  }
+
+  .preview-image {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+  }
+
+  .preview-video {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+  }
+
+  .button-group {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+  }
+
+  .btn {
+    padding: 0.8rem 2rem;
+    border: none;
+    border-radius: 25px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+  }
+
+  .btn-primary {
+    background: #ffa500;
+    color: #000;
+  }
+
+  .btn-primary:hover {
+    background: #d99b00;
+    transform: translateY(-2px);
+  }
+
+  .btn-secondary {
+    background: #444;
+    color: white;
+  }
+
+  .btn-secondary:hover {
+    background: #555;
+    transform: translateY(-2px);
+  }
+
+  .error-message {
+    color: #ff6b6b;
+    background: rgba(255, 107, 107, 0.1);
+    padding: 0.8rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border: 1px solid #ff6b6b;
+  }
+
+  .success-message {
+    color: #51cf66;
+    background: rgba(81, 207, 102, 0.1);
+    padding: 0.8rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border: 1px solid #51cf66;
+  }
+</style>
+
+<div class="create-post-container">
+  <div class="create-post-header">
+    <h2>Create New Post</h2>
+  </div>
+
+  {% if error %}
+  <div class="error-message">{{ error }}</div>
+  {% endif %}
+
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="form-group">
+      <label for="content">What's on your mind?</label>
+      <textarea
+        id="content"
+        name="content"
+        placeholder="Share your thoughts, achievements, or updates..."
+        required
+      >
+{{ form.content.value|default:'' }}</textarea
+      >
+    </div>
+
+    <div class="file-input-group">
+      <label for="image">
+        📷 Add Photo
+        <input
+          type="file"
+          id="image"
+          name="image"
+          accept="image/*"
+          onchange="previewFile(this, 'image-preview')"
+        />
+      </label>
+    </div>
+
+    <div class="file-input-group">
+      <label for="video">
+        🎥 Add Video
+        <input
+          type="file"
+          id="video"
+          name="video"
+          accept="video/*"
+          onchange="previewFile(this, 'video-preview')"
+        />
+      </label>
+    </div>
+
+    <div class="preview-container">
+      <div id="image-preview"></div>
+      <div id="video-preview"></div>
+    </div>
+
+    <div class="button-group">
+      <a href="{% url 'feed' %}" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn btn-primary">Create Post</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  function previewFile(input, previewId) {
+    const preview = document.getElementById(previewId);
+    const file = input.files[0];
+
+    if (file) {
+      const reader = new FileReader();
+
+      reader.onload = function (e) {
+        preview.innerHTML = "";
+
+        if (file.type.startsWith("image/")) {
+          const img = document.createElement("img");
+          img.src = e.target.result;
+          img.className = "preview-image";
+          preview.appendChild(img);
+        } else if (file.type.startsWith("video/")) {
+          const video = document.createElement("video");
+          video.src = e.target.result;
+          video.className = "preview-video";
+          video.controls = true;
+          preview.appendChild(video);
+        }
+      };
+
+      reader.readAsDataURL(file);
+    } else {
+      preview.innerHTML = "";
+    }
+  }
+
+  // Clear other file input when one is selected
+  document.getElementById("image").addEventListener("change", function () {
+    if (this.files.length > 0) {
+      document.getElementById("video").value = "";
+      document.getElementById("video-preview").innerHTML = "";
+    }
+  });
+
+  document.getElementById("video").addEventListener("change", function () {
+    if (this.files.length > 0) {
+      document.getElementById("image").value = "";
+      document.getElementById("image-preview").innerHTML = "";
+    }
+  });
+</script>
+{% endblock %}

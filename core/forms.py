@@ -45,8 +45,15 @@ class RegisterForm(forms.ModelForm):
         cleaned_data = super().clean()
         password1 = cleaned_data.get('password1')
         password2 = cleaned_data.get('password2')
+        email = cleaned_data.get('email')
+        
         if password1 and password2 and password1 != password2:
             raise forms.ValidationError("Passwords do not match.")
+        
+        # Check for duplicate email
+        if email and User.objects.filter(email=email).exists():
+            raise forms.ValidationError("A user with this email already exists.")
+        
         return cleaned_data
 
     def clean_grad_year(self):
@@ -57,13 +64,15 @@ class RegisterForm(forms.ModelForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.password = make_password(self.cleaned_data["password1"])
+        # Use set_password instead of make_password for proper hashing
+        user.set_password(self.cleaned_data["password1"])
         if commit:
             user.save()
-            Profile.objects.create(
-                user=user,
-                role=self.cleaned_data["role"],
-                school=self.cleaned_data["school"],
-                grad_year=self.cleaned_data["grad_year"]
-            )
+            # Profile is automatically created by the signal
+            # Update the profile with additional data
+            profile = user.profile
+            profile.role = self.cleaned_data["role"]
+            profile.school = self.cleaned_data["school"]
+            profile.grad_year = self.cleaned_data["grad_year"]
+            profile.save()
         return user

@@ -30,13 +30,32 @@ def edit_profile(request):
     profile = request.user.profile
 
     if request.method == 'POST':
-        profile.bio = request.POST.get('bio')
-        profile.sport = request.POST.get('sport')
-        profile.position = request.POST.get('position')
-        profile.level = request.POST.get('level')
-        profile.experience = request.POST.get('experience')
-        profile.school = request.POST.get('school')
-        profile.grad_year = request.POST.get('grad_year')
+        profile.bio = request.POST.get('bio', '')
+        profile.sport = request.POST.get('sport', '')
+        profile.position = request.POST.get('position', '')
+        profile.level = request.POST.get('level', '')
+        
+        # Handle experience field - convert empty string to None
+        experience_value = request.POST.get('experience', '')
+        if experience_value == '':
+            profile.experience = None
+        else:
+            try:
+                profile.experience = int(experience_value)
+            except ValueError:
+                profile.experience = None
+        
+        profile.school = request.POST.get('school', '')
+        
+        # Handle grad_year field - convert empty string to None
+        grad_year_value = request.POST.get('grad_year', '')
+        if grad_year_value == '':
+            profile.grad_year = None
+        else:
+            try:
+                profile.grad_year = int(grad_year_value)
+            except ValueError:
+                profile.grad_year = None
 
         if 'profile_image' in request.FILES:
             profile.profile_image = request.FILES['profile_image']
@@ -44,7 +63,7 @@ def edit_profile(request):
             profile.cover_image = request.FILES['cover_image']
 
         profile.save()
-        return redirect('view_profile')
+        return redirect('profile')
 
     return render(request, 'edit_profile.html', {'profile': profile})
 
@@ -72,13 +91,18 @@ def notifications(request):
     notes = Notification.objects.filter(user=request.user).order_by('-created_at')
     return render(request, 'notifications.html', {'notifications': notes})
 
-@csrf_exempt
 @login_required
 def create_post(request):
     if request.method == 'POST':
         content = request.POST.get('content')
         image = request.FILES.get('image')
         video = request.FILES.get('video')
+
+        if not content.strip():
+            return render(request, 'create_post.html', {
+                'error': 'Post content is required.',
+                'form': {'content': {'value': content}}
+            })
 
         Post.objects.create(
             user=request.user,
@@ -87,13 +111,13 @@ def create_post(request):
             video=video
         )
         return redirect('feed')
+    
+    return render(request, 'create_post.html')
 
 @login_required
 def feed(request):
-    following_ids = Follow.objects.filter(follower=request.user).values_list('following_id', flat=True)
-    posts = Post.objects.filter(
-    models.Q(user_id__in=following_ids) | models.Q(user=request.user)
-).order_by('-created_at')
+    # Show all posts from all users, ordered by creation date
+    posts = Post.objects.all().order_by('-created_at')
 
     # Pagination
     paginator = Paginator(posts, 10)
@@ -121,9 +145,22 @@ def login_view(request):
 
     if request.method == 'POST':
         if form.is_valid():
-            username = form.cleaned_data['username']
+            username_or_email = form.cleaned_data['username']
             password = form.cleaned_data['password']
-            user = authenticate(request, username=username, password=password)
+            
+            # Try to authenticate with username first
+            user = authenticate(request, username=username_or_email, password=password)
+            
+            # If that fails, try to find user by email and authenticate
+            if user is None:
+                try:
+                    # Use filter().first() instead of get() to handle multiple users with same email
+                    user_obj = User.objects.filter(email=username_or_email).first()
+                    if user_obj:
+                        user = authenticate(request, username=user_obj.username, password=password)
+                except User.DoesNotExist:
+                    user = None
+            
             if user:
                 login(request, user)
                 return redirect('feed')
@@ -141,13 +178,11 @@ def register_view(request):
         form = RegisterForm(request.POST, request.FILES)
         if form.is_valid():
             user = form.save()
-            Profile.objects.create(
-                user=user,
-                role=form.cleaned_data['role'],
-                school=form.cleaned_data['school'],
-                grad_year=form.cleaned_data['grad_year'],
-                profile_image=request.FILES.get('profile_image')
-            )
+            # Handle profile image if uploaded
+            if request.FILES.get('profile_image'):
+                profile = user.profile
+                profile.profile_image = request.FILES.get('profile_image')
+                profile.save()
             login(request, user)
             return redirect('feed')
     else:

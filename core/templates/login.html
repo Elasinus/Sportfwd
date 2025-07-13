@@ -1,11 +1,9 @@
-{% extends "base.html" %}
-{% load static %}
-{% block content %}
+{% extends "base.html" %} {% load static %} {% block content %}
 <style>
   body {
     margin: 0;
     padding: 0;
-    font-family: 'Rajdhani', sans-serif;
+    font-family: "Rajdhani", sans-serif;
     background: #000;
     color: #fff;
   }
@@ -19,7 +17,8 @@
 
   .auth-background-img {
     position: absolute;
-    top: 0; left: 0;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -108,7 +107,7 @@
   .forgot-link {
     display: block;
     margin-top: 0.8rem;
-    color: #007BFF;
+    color: #007bff;
   }
 
   .signup-text {
@@ -147,25 +146,32 @@
 </style>
 
 <div class="auth-background">
-  <img src="{% static 'images/loggin.gif' %}" alt="Login Background" class="auth-background-img">
+  <img
+    src="{% static 'images/loggin.gif' %}"
+    alt="Login Background"
+    class="auth-background-img"
+  />
 
   <div class="auth-overlay">
     <div class="login-box">
       <h2>Login</h2>
-      {% if error %}<p class="error">{{ error }}</p>{% endif %}
+      {% if error %}
+      <p class="error">{{ error }}</p>
+      {% endif %}
 
       <form method="POST">
         {% csrf_token %}
         <div class="form-group">
-          {{ form.username.label_tag }}
-          {{ form.username }}
+          {{ form.username.label_tag }} {{ form.username }}
         </div>
 
         <div class="form-group password-toggle-group">
           {{ form.password.label_tag }}
           <div class="password-wrapper">
             {{ form.password }}
-            <span class="toggle-password" onclick="togglePassword(this)">👁</span>
+            <span class="toggle-password" onclick="togglePassword(this)"
+              >👁</span
+            >
           </div>
         </div>
 
@@ -174,16 +180,10 @@
 
       <a href="#" class="forgot-link">Forgot password?</a>
 
-      <p class="signup-text">New user?
+      <p class="signup-text">
+        New user?
         <a href="{% url 'register' %}" class="signup-link">Signup Now</a>
       </p>
-
-      <p class="social-text">May also signup with</p>
-      <div class="social-icons">
-        <a href="#"><img src="{% static 'icons/facebook.png' %}" alt="Facebook" /></a>
-        <a href="#"><img src="{% static 'icons/twitter.png' %}" alt="Twitter" /></a>
-        <a href="#"><img src="{% static 'icons/linkedin.png' %}" alt="LinkedIn" /></a>
-      </div>
     </div>
   </div>
 </div>

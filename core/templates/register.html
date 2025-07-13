@@ -1,6 +1,4 @@
-{% extends "base.html" %}
-{% load static %}
-{% block content %}
+{% extends "base.html" %} {% load static %} {% block content %}
 <style>
   .auth-fullscreen {
     position: relative;
@@ -143,41 +141,42 @@
 </style>
 
 <div class="auth-fullscreen">
-  <img src="{% static 'images/loggin.gif' %}" alt="Register Background" class="bg-gif">
+  <img
+    src="{% static 'images/loggin.gif' %}"
+    alt="Register Background"
+    class="bg-gif"
+  />
 
   <div class="auth-overlay">
     <div class="auth-box">
       <h2>Create Account</h2>
 
       {% if error %}
-        <p style="color: red;">{{ error }}</p>
+      <p style="color: red">{{ error }}</p>
       {% endif %}
 
       <form method="POST">
-        {% csrf_token %}
-
-        {{ form.non_field_errors }}
+        {% csrf_token %} {{ form.non_field_errors }}
 
         <div class="form-group">
-          {{ form.first_name.label_tag }}
-          {{ form.first_name }}
+          {{ form.first_name.label_tag }} {{ form.first_name }}
         </div>
 
         <div class="form-group">
-          {{ form.username.label_tag }}
-          {{ form.username }}
+          {{ form.username.label_tag }} {{ form.username }}
         </div>
 
         <div class="form-group">
-          {{ form.email.label_tag }}
-          {{ form.email }}
+          {{ form.email.label_tag }} {{ form.email }}
         </div>
 
         <div class="form-group password-toggle-group">
           {{ form.password1.label_tag }}
           <div class="password-wrapper">
             {{ form.password1 }}
-            <span class="toggle-password" onclick="togglePassword(this)">👁</span>
+            <span class="toggle-password" onclick="togglePassword(this)"
+              >👁</span
+            >
           </div>
         </div>
 
@@ -185,32 +184,29 @@
           {{ form.password2.label_tag }}
           <div class="password-wrapper">
             {{ form.password2 }}
-            <span class="toggle-password" onclick="togglePassword(this)">👁</span>
+            <span class="toggle-password" onclick="togglePassword(this)"
+              >👁</span
+            >
           </div>
         </div>
 
+        <div class="form-group">{{ form.role.label_tag }} {{ form.role }}</div>
+
         <div class="form-group">
-          {{ form.role.label_tag }}
-          {{ form.role }}
+          {{ form.school.label_tag }} {{ form.school }}
         </div>
 
         <div class="form-group">
-          {{ form.school.label_tag }}
-          {{ form.school }}
-        </div>
-
-        <div class="form-group">
-          {{ form.grad_year.label_tag }}
-          {{ form.grad_year }}
+          {{ form.grad_year.label_tag }} {{ form.grad_year }}
         </div>
 
         <div class="checkboxes">
           <label>
-            <input type="checkbox" name="terms" required>
+            <input type="checkbox" name="terms" required />
             I agree with <a href="#">terms and conditions</a>
           </label>
           <label>
-            <input type="checkbox" name="newsletter">
+            <input type="checkbox" name="newsletter" />
             I want to receive the newsletter
           </label>
         </div>
@@ -218,13 +214,9 @@
         <button type="submit" class="register-btn">Register</button>
       </form>
 
-      <p class="login-redirect">Already have an account? <a href="{% url 'login' %}">Login here</a></p>
-
-      <div class="social-icons">
-        <a href="#"><img src="{% static 'icons/facebook.png' %}" alt="Facebook" /></a>
-        <a href="#"><img src="{% static 'icons/twitter.png' %}" alt="Twitter" /></a>
-        <a href="#"><img src="{% static 'icons/linkedin.png' %}" alt="LinkedIn" /></a>
-      </div>
+      <p class="login-redirect">
+        Already have an account? <a href="{% url 'login' %}">Login here</a>
+      </p>
     </div>
   </div>
 </div>
