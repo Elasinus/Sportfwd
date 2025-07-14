@@ -9,6 +9,7 @@ from django.db.models import Q
 from .forms import LoginForm, RegisterForm
 from .models import Message,Post, Profile, Comment, Like, Follow, Notification
 from django.utils import timezone
+from django.http import JsonResponse
 
 def home(request):
     if request.user.is_authenticated:
@@ -20,11 +21,68 @@ def view_profile(request):
     profile = request.user.profile
     posts = Post.objects.filter(user=request.user).order_by('-created_at')
     post_count = posts.count()
+    followers_count = Follow.objects.filter(following=request.user).count()
+    following_count = Follow.objects.filter(follower=request.user).count()
     return render(request, 'profile.html', {
         'profile': profile,
         'posts': posts,
         'post_count': post_count,
+        'followers_count': followers_count,
+        'following_count': following_count,
     })
+
+@login_required
+def user_profile(request, username):
+    user = get_object_or_404(User, username=username)
+    profile = user.profile
+    posts = Post.objects.filter(user=user).order_by('-created_at')
+    post_count = posts.count()
+    
+    # Check if current user is following this user
+    is_following = Follow.objects.filter(follower=request.user, following=user).exists()
+    
+    # Get follower and following counts
+    followers_count = Follow.objects.filter(following=user).count()
+    following_count = Follow.objects.filter(follower=user).count()
+    
+    return render(request, 'user_profile.html', {
+        'profile_user': user,
+        'profile': profile,
+        'posts': posts,
+        'post_count': post_count,
+        'is_following': is_following,
+        'followers_count': followers_count,
+        'following_count': following_count,
+    })
+
+@login_required
+def follow_user(request, username):
+    user_to_follow = get_object_or_404(User, username=username)
+    
+    # Don't allow following yourself
+    if user_to_follow == request.user:
+        return redirect('user_profile', username=username)
+    
+    # Check if already following
+    follow, created = Follow.objects.get_or_create(
+        follower=request.user,
+        following=user_to_follow
+    )
+    
+    if not created:
+        # If already following, unfollow
+        follow.delete()
+        action = 'unfollowed'
+    else:
+        # If not following, follow
+        action = 'followed'
+        # Create notification
+        Notification.objects.create(
+            user=user_to_follow,
+            content=f"{request.user.username} started following you"
+        )
+    
+    return redirect('user_profile', username=username)
 
 @login_required
 def edit_profile(request):
@@ -326,3 +384,63 @@ def chat_view(request, username):
         'other_user': other_user,
         'messages': messages
     })
+
+@login_required
+def current_user_followers(request):
+    """Get followers for the current logged-in user"""
+    followers = Follow.objects.filter(following=request.user).select_related('follower__profile')
+    followers_data = []
+    for f in followers:
+        follower = f.follower
+        profile = getattr(follower, 'profile', None)
+        followers_data.append({
+            'username': follower.username,
+            'full_name': follower.get_full_name(),
+            'profile_image': profile.profile_image.url if profile and profile.profile_image else '/media/profile_images/default.png',
+        })
+    return JsonResponse({'followers': followers_data})
+
+@login_required
+def current_user_following(request):
+    """Get following list for the current logged-in user"""
+    following = Follow.objects.filter(follower=request.user).select_related('following__profile')
+    following_data = []
+    for f in following:
+        following_user = f.following
+        profile = getattr(following_user, 'profile', None)
+        following_data.append({
+            'username': following_user.username,
+            'full_name': following_user.get_full_name(),
+            'profile_image': profile.profile_image.url if profile and profile.profile_image else '/media/profile_images/default.png',
+        })
+    return JsonResponse({'following': following_data})
+
+@login_required
+def user_followers(request, username):
+    user = get_object_or_404(User, username=username)
+    followers = Follow.objects.filter(following=user).select_related('follower__profile')
+    followers_data = []
+    for f in followers:
+        follower = f.follower
+        profile = getattr(follower, 'profile', None)
+        followers_data.append({
+            'username': follower.username,
+            'full_name': follower.get_full_name(),
+            'profile_image': profile.profile_image.url if profile and profile.profile_image else '/media/profile_images/default.png',
+        })
+    return JsonResponse({'followers': followers_data})
+
+@login_required
+def user_following(request, username):
+    user = get_object_or_404(User, username=username)
+    following = Follow.objects.filter(follower=user).select_related('following__profile')
+    following_data = []
+    for f in following:
+        following_user = f.following
+        profile = getattr(following_user, 'profile', None)
+        following_data.append({
+            'username': following_user.username,
+            'full_name': following_user.get_full_name(),
+            'profile_image': profile.profile_image.url if profile and profile.profile_image else '/media/profile_images/default.png',
+        })
+    return JsonResponse({'following': following_data})
