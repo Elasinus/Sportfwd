@@ -463,6 +463,9 @@
       <button class="tab-button active" onclick="showTab('posts')">
         Posts
       </button>
+      {% if profile.role == 'sponsor' %}
+      <button class="tab-button" onclick="showTab('events')">Events</button>
+      {% endif %}
       <button class="tab-button" onclick="showTab('media')">Media</button>
       <button class="tab-button" onclick="showTab('activity')">Activity</button>
     </div>
@@ -476,10 +479,96 @@
       </div>
       {% empty %}
       <div style="color: #aaa; text-align: center; padding: 2rem">
-        You haven’t posted anything yet.
+        You haven't posted anything yet.
       </div>
       {% endfor %}
     </div>
+    {% if profile.role == 'sponsor' %}
+    <div class="tab-content" id="events" style="display: none">
+      <div style="margin-bottom: 1rem">
+        <a
+          href="{% url 'create_event' %}"
+          style="
+            background: #ffa500;
+            color: black;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            display: inline-block;
+          "
+        >
+          📅 Create New Event
+        </a>
+      </div>
+      {% for event in events %}
+      <div class="post-box" style="border-left: 4px solid #ffa500">
+        <h3 style="color: #ffa500; margin: 0.5rem 0">{{ event.title }}</h3>
+        <p>{{ event.description|truncatewords:30 }}</p>
+        {% if event.photo %}
+        <img
+          src="{{ event.photo.url }}"
+          alt="Event photo"
+          style="max-width: 100%; border-radius: 8px; margin: 0.5rem 0"
+        />
+        {% endif %}
+        <div
+          style="
+            background: #2c2c2e;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+          "
+        >
+          <div style="display: flex; gap: 2rem; margin-bottom: 1rem">
+            <div>
+              <span style="color: #ffa500">📅</span>
+              <span
+                >{{ event.event_date|date:"F j, Y" }} at {{
+                event.event_date|time:"g:i A" }}</span
+              >
+            </div>
+            <div>
+              <span style="color: #ffa500">📍</span>
+              <span>{{ event.venue_name }}</span>
+            </div>
+          </div>
+          <div style="display: flex; gap: 2rem; font-size: 0.9rem">
+            <div>
+              <span style="color: #4caf50"
+                >{{ event.get_interested_count }}</span
+              >
+              Interested
+            </div>
+            <div>
+              <span style="color: #ffa500"
+                >{{ event.get_attending_count }}</span
+              >
+              Attending
+            </div>
+          </div>
+        </div>
+        <a
+          href="{% url 'event_detail' event.id %}"
+          style="
+            background: #ffa500;
+            color: black;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+          "
+        >
+          View Event Details
+        </a>
+      </div>
+      {% empty %}
+      <div style="color: #aaa; text-align: center; padding: 2rem">
+        You haven't created any events yet.
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
     <div class="tab-content" id="media" style="display: none">
       <p>Media uploads will be shown here.</p>
     </div>

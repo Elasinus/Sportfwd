@@ -64,3 +64,38 @@ class Message(models.Model):
 
     def __str__(self):
         return f"From {self.sender} to {self.recipient}"
+
+class Event(models.Model):
+    organizer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='organized_events')
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    photo = models.ImageField(upload_to='event_photos/', blank=True, null=True)
+    event_date = models.DateTimeField()
+    venue_name = models.CharField(max_length=200)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return self.title
+    
+    def get_attending_count(self):
+        return self.event_responses.filter(response_type='attending').count()
+    
+    def get_interested_count(self):
+        return self.event_responses.filter(response_type='interested').count()
+
+class EventResponse(models.Model):
+    RESPONSE_CHOICES = [
+        ('interested', 'Interested'),
+        ('attending', 'Attending'),
+    ]
+    
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='event_responses')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='event_responses')
+    response_type = models.CharField(max_length=20, choices=RESPONSE_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['event', 'user']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.response_type} - {self.event.title}"

@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import Q
 from .forms import LoginForm, RegisterForm
-from .models import Message,Post, Profile, Comment, Like, Follow, Notification
+from .models import Message,Post, Profile, Comment, Like, Follow, Notification, Event, EventResponse
 from django.utils import timezone
 from django.http import JsonResponse
 
@@ -23,9 +23,16 @@ def view_profile(request):
     post_count = posts.count()
     followers_count = Follow.objects.filter(following=request.user).count()
     following_count = Follow.objects.filter(follower=request.user).count()
+    
+    # Get events if user is a sponsor
+    events = []
+    if profile.role == 'sponsor':
+        events = Event.objects.filter(organizer=request.user).order_by('-created_at')
+    
     return render(request, 'profile.html', {
         'profile': profile,
         'posts': posts,
+        'events': events,
         'post_count': post_count,
         'followers_count': followers_count,
         'following_count': following_count,
@@ -175,16 +182,36 @@ def create_post(request):
 
 @login_required
 def feed(request):
-    # Show all posts from all users, ordered by creation date
+    # Show all posts and events, ordered by creation date
     posts = Post.objects.all().order_by('-created_at')
+    events = Event.objects.all().order_by('-created_at')
+    
+    # Combine posts and events and sort by creation date
+    from itertools import chain
+    from operator import attrgetter
+    
+    all_items = sorted(
+        chain(posts, events),
+        key=attrgetter('created_at'),
+        reverse=True
+    )
 
     # Pagination
-    paginator = Paginator(posts, 10)
+    paginator = Paginator(all_items, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
     # Get liked posts by current user
-    liked_post_ids = Like.objects.filter(user=request.user, post__in=page_obj).values_list('post_id', flat=True)
+    post_items = [item for item in page_obj if hasattr(item, 'user') and hasattr(item, 'likes')]
+    liked_post_ids = Like.objects.filter(user=request.user, post__in=post_items).values_list('post_id', flat=True)
+
+    # Get user responses to events
+    event_items = [item for item in page_obj if hasattr(item, 'organizer')]
+    user_event_responses = {}
+    if event_items:
+        responses = EventResponse.objects.filter(user=request.user, event__in=event_items)
+        for response in responses:
+            user_event_responses[response.event.id] = response.response_type
 
     try:
         profile = request.user.profile
@@ -192,10 +219,11 @@ def feed(request):
         profile = None
 
     return render(request, 'feed.html', {
-        'posts': page_obj,
+        'items': page_obj,
         'profile': profile,
         'page_obj': page_obj,
-        'liked_post_ids': liked_post_ids
+        'liked_post_ids': liked_post_ids,
+        'user_event_responses': user_event_responses
     })
 
 def login_view(request):
@@ -444,3 +472,109 @@ def user_following(request, username):
             'profile_image': profile.profile_image.url if profile and profile.profile_image else '/media/profile_images/default.png',
         })
     return JsonResponse({'following': following_data})
+
+# Event Views
+@login_required
+def create_event(request):
+    # Check if user is a sponsor
+    if request.user.profile.role != 'sponsor':
+        return redirect('feed')
+    
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+        event_date = request.POST.get('event_date')
+        venue_name = request.POST.get('venue_name')
+        photo = request.FILES.get('photo')
+        
+        if title and description and event_date and venue_name:
+            event = Event.objects.create(
+                organizer=request.user,
+                title=title,
+                description=description,
+                event_date=event_date,
+                venue_name=venue_name,
+                photo=photo
+            )
+            return redirect('event_detail', event_id=event.id)
+    
+    return render(request, 'create_event.html')
+
+@login_required
+def event_detail(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    user_response = None
+    if request.user.is_authenticated:
+        user_response = EventResponse.objects.filter(event=event, user=request.user).first()
+    
+    return render(request, 'event_detail.html', {
+        'event': event,
+        'user_response': user_response,
+        'is_organizer': event.organizer == request.user
+    })
+
+@login_required
+def respond_to_event(request, event_id):
+    if request.method == 'POST':
+        event = get_object_or_404(Event, id=event_id)
+        response_type = request.POST.get('response_type')
+        
+        if response_type in ['interested', 'attending']:
+            # Remove existing response if any
+            EventResponse.objects.filter(event=event, user=request.user).delete()
+            
+            # Create new response
+            EventResponse.objects.create(
+                event=event,
+                user=request.user,
+                response_type=response_type
+            )
+            
+            # Create notification for organizer
+            Notification.objects.create(
+                user=event.organizer,
+                content=f"{request.user.username} is {response_type} in your event '{event.title}'"
+            )
+    
+    return redirect('event_detail', event_id=event_id)
+
+@login_required
+def event_responses(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    
+    # Check if user is the organizer
+    if event.organizer != request.user:
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+    
+    attending_users = EventResponse.objects.filter(
+        event=event, 
+        response_type='attending'
+    ).select_related('user__profile')
+    
+    interested_users = EventResponse.objects.filter(
+        event=event, 
+        response_type='interested'
+    ).select_related('user__profile')
+    
+    attending_data = []
+    for response in attending_users:
+        profile = getattr(response.user, 'profile', None)
+        attending_data.append({
+            'username': response.user.username,
+            'full_name': response.user.get_full_name(),
+            'profile_image': profile.profile_image.url if profile and profile.profile_image else '/media/profile_images/default.png',
+        })
+    
+    interested_data = []
+    for response in interested_users:
+        profile = getattr(response.user, 'profile', None)
+        interested_data.append({
+            'username': response.user.username,
+            'full_name': response.user.get_full_name(),
+            'profile_image': profile.profile_image.url if profile and profile.profile_image else '/media/profile_images/default.png',
+        })
+    
+    return JsonResponse({
+        'attending': attending_data,
+        'interested': interested_data
+    })

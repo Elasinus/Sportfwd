@@ -1,0 +1,525 @@
+{% extends 'base.html' %} {% load static %} {% block content %}
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    background: #121212;
+    font-family: "Segoe UI", sans-serif;
+    color: #fff;
+  }
+
+  .event-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #1c1c1e;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  .event-header {
+    position: relative;
+  }
+
+  .event-photo {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+  }
+
+  .event-photo-placeholder {
+    width: 100%;
+    height: 300px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    font-weight: bold;
+  }
+
+  .event-info {
+    padding: 2rem;
+  }
+
+  .event-title {
+    font-size: 2rem;
+    color: #ffa500;
+    margin-bottom: 1rem;
+  }
+
+  .event-meta {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+    color: #aaa;
+  }
+
+  .event-meta div {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .event-description {
+    line-height: 1.6;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+  }
+
+  .event-stats {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: #2c2c2e;
+    border-radius: 8px;
+  }
+
+  .stat-item {
+    text-align: center;
+  }
+
+  .stat-number {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #ffa500;
+  }
+
+  .stat-label {
+    color: #aaa;
+    font-size: 0.9rem;
+  }
+
+  .event-actions {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .action-btn {
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+  }
+
+  .interested-btn {
+    background: #4caf50;
+    color: white;
+  }
+
+  .interested-btn:hover {
+    background: #45a049;
+  }
+
+  .attending-btn {
+    background: #ffa500;
+    color: black;
+  }
+
+  .attending-btn:hover {
+    background: #ff8c00;
+  }
+
+  .organizer-actions {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #444;
+  }
+
+  .responses-btn {
+    background: #2196f3;
+    color: white;
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+
+  .responses-btn:hover {
+    background: #1976d2;
+  }
+
+  .organizer-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: #2c2c2e;
+    border-radius: 8px;
+  }
+
+  .organizer-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .organizer-details h3 {
+    margin: 0;
+    color: #ffa500;
+  }
+
+  .organizer-details p {
+    margin: 0.2rem 0 0 0;
+    color: #aaa;
+  }
+
+  .back-link {
+    display: inline-block;
+    margin-bottom: 1rem;
+    color: #ffa500;
+    text-decoration: none;
+    font-weight: bold;
+  }
+
+  .back-link:hover {
+    color: #ff8c00;
+  }
+
+  /* Modal Styles */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    justify-content: center;
+    align-items: center;
+  }
+
+  .modal-content {
+    background: #2c2c2e;
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 1.5rem;
+    cursor: pointer;
+  }
+
+  .responses-tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .tab-btn {
+    background: none;
+    border: 1px solid #ffa500;
+    color: #ffa500;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .tab-btn.active {
+    background: #ffa500;
+    color: black;
+  }
+
+  .response-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .response-item {
+    display: flex;
+    align-items: center;
+    padding: 0.8rem;
+    border-bottom: 1px solid #444;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .response-item:hover {
+    background-color: #3c3c3e;
+  }
+
+  .response-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 12px;
+    object-fit: cover;
+  }
+
+  .response-info {
+    flex: 1;
+  }
+
+  .response-name {
+    font-weight: bold;
+    color: white;
+    margin-bottom: 2px;
+  }
+
+  .response-username {
+    color: #aaa;
+    font-size: 0.9rem;
+  }
+</style>
+
+<div class="event-container">
+  <a href="{% url 'feed' %}" class="back-link">← Back to Feed</a>
+
+  <div class="event-header">
+    {% if event.photo %}
+    <img
+      src="{{ event.photo.url }}"
+      alt="{{ event.title }}"
+      class="event-photo"
+    />
+    {% else %}
+    <div class="event-photo-placeholder">📅 Event</div>
+    {% endif %}
+  </div>
+
+  <div class="event-info">
+    <h1 class="event-title">{{ event.title }}</h1>
+
+    <div class="organizer-info">
+      <img
+        src="{{ event.organizer.profile.profile_image.url }}"
+        alt="{{ event.organizer.username }}"
+        class="organizer-avatar"
+      />
+      <div class="organizer-details">
+        <h3>
+          {{ event.organizer.get_full_name|default:event.organizer.username }}
+        </h3>
+        <p>Event Organizer</p>
+      </div>
+      <a
+        href="{% url 'user_profile' event.organizer.username %}"
+        class="action-btn"
+        style="background: #666; color: white"
+        >View Profile</a
+      >
+      <a
+        href="{% url 'inbox' %}?user={{ event.organizer.username }}"
+        class="action-btn"
+        style="background: #4caf50; color: white"
+        >Message</a
+      >
+    </div>
+
+    <div class="event-meta">
+      <div>
+        <span>📅</span>
+        <span
+          >{{ event.event_date|date:"F j, Y" }}
+          at{{event.event_date|time:"g:iA"}}</span
+        >
+      </div>
+      <div>
+        <span>📍</span>
+        <span>{{ event.venue_name }}</span>
+      </div>
+    </div>
+
+    <div class="event-description">{{ event.description|linebreaks }}</div>
+
+    <div class="event-stats">
+      <div class="stat-item">
+        <div class="stat-number">{{ event.get_interested_count }}</div>
+        <div class="stat-label">Interested</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">{{ event.get_attending_count }}</div>
+        <div class="stat-label">Attending</div>
+      </div>
+    </div>
+
+    {% if not is_organizer %}
+    <div class="event-actions">
+      <form
+        method="POST"
+        action="{% url 'respond_to_event' event.id %}"
+        style="display: inline"
+      >
+        {% csrf_token %}
+        <input type="hidden" name="response_type" value="interested" />
+        <button
+          type="submit"
+          class="action-btn interested-btn {% if user_response.response_type == 'interested' %}active{% endif %}"
+        >
+          {% if user_response.response_type == 'interested' %}✓ Interested
+          {%else %}Interested{% endif %}
+        </button>
+      </form>
+
+      <form
+        method="POST"
+        action="{% url 'respond_to_event' event.id %}"
+        style="display: inline"
+      >
+        {% csrf_token %}
+        <input type="hidden" name="response_type" value="attending" />
+        <button
+          type="submit"
+          class="action-btn attending-btn {% if user_response.response_type == 'attending' %}active{% endif %}"
+        >
+          {% if user_response.response_type == 'attending' %}✓ Attending
+          {%else%}Attending{% endif %}
+        </button>
+      </form>
+    </div>
+    {% endif %} {% if is_organizer %}
+    <div class="organizer-actions">
+      <button class="responses-btn" onclick="showResponses()">
+        View Responses
+      </button>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Responses Modal -->
+<div id="responsesModal" class="modal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeResponsesModal()">&times;</button>
+    <h3 style="margin-top: 0; color: #ffa500">Event Responses</h3>
+
+    <div class="responses-tabs">
+      <button class="tab-btn active" onclick="showTab('attending')">
+        Attending
+      </button>
+      <button class="tab-btn" onclick="showTab('interested')">
+        Interested
+      </button>
+    </div>
+
+    <div id="attendingTab">
+      <ul class="response-list" id="attendingList">
+        <!-- Attending users will be loaded here -->
+      </ul>
+    </div>
+
+    <div id="interestedTab" style="display: none">
+      <ul class="response-list" id="interestedList">
+        <!-- Interested users will be loaded here -->
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showResponses() {
+    fetch(`/event/{{ event.id }}/responses/`)
+      .then((response) => response.json())
+      .then((data) => {
+        const attendingList = document.getElementById("attendingList");
+        const interestedList = document.getElementById("interestedList");
+
+        // Load attending users
+        attendingList.innerHTML = "";
+        if (data.attending.length === 0) {
+          attendingList.innerHTML =
+            '<li style="color:#aaa; text-align:center;">No one attending yet.</li>';
+        } else {
+          data.attending.forEach((user) => {
+            const li = document.createElement("li");
+            li.className = "response-item";
+            li.onclick = function () {
+              window.location.href = `/profile/${user.username}/`;
+            };
+            li.innerHTML = `
+              <img src="${user.profile_image}" class="response-avatar" alt="${
+              user.username
+            }">
+              <div class="response-info">
+                <div class="response-name">${
+                  user.full_name || user.username
+                }</div>
+                <div class="response-username">@${user.username}</div>
+              </div>
+            `;
+            attendingList.appendChild(li);
+          });
+        }
+
+        // Load interested users
+        interestedList.innerHTML = "";
+        if (data.interested.length === 0) {
+          interestedList.innerHTML =
+            '<li style="color:#aaa; text-align:center;">No one interested yet.</li>';
+        } else {
+          data.interested.forEach((user) => {
+            const li = document.createElement("li");
+            li.className = "response-item";
+            li.onclick = function () {
+              window.location.href = `/profile/${user.username}/`;
+            };
+            li.innerHTML = `
+              <img src="${user.profile_image}" class="response-avatar" alt="${
+              user.username
+            }">
+              <div class="response-info">
+                <div class="response-name">${
+                  user.full_name || user.username
+                }</div>
+                <div class="response-username">@${user.username}</div>
+              </div>
+            `;
+            interestedList.appendChild(li);
+          });
+        }
+
+        document.getElementById("responsesModal").style.display = "flex";
+      });
+  }
+
+  function closeResponsesModal() {
+    document.getElementById("responsesModal").style.display = "none";
+  }
+
+  function showTab(tabName) {
+    // Hide all tabs
+    document.getElementById("attendingTab").style.display = "none";
+    document.getElementById("interestedTab").style.display = "none";
+
+    // Show selected tab
+    document.getElementById(tabName + "Tab").style.display = "block";
+
+    // Update tab buttons
+    document
+      .querySelectorAll(".tab-btn")
+      .forEach((btn) => btn.classList.remove("active"));
+    event.target.classList.add("active");
+  }
+
+  // Close modal when clicking outside
+  document
+    .getElementById("responsesModal")
+    .addEventListener("click", function (e) {
+      if (e.target === this) closeResponsesModal();
+    });
+</script>
+{% endblock %}

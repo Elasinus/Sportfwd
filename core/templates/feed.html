@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block content %}
 <style>
@@ -392,33 +393,35 @@
       </div>
     </div>
 
-    {% for post in page_obj %}
+    {% for item in items %}
+    {% if item.user %}
+    <!-- This is a Post -->
     <div class="post-box">
       <div class="post-header">
-        <img src="{{ post.user.profile.profile_image.url }}" alt="{{ post.user.username }}" onclick="showUserProfile('{{ post.user.username }}', '{{ post.user.profile.profile_image.url }}', '{{ post.user.profile.bio|default:"" }}')" />
+        <img src="{{ item.user.profile.profile_image.url }}" alt="{{ item.user.username }}" onclick="showUserProfile('{{ item.user.username }}', '{{ item.user.profile.profile_image.url }}', '{{ item.user.profile.bio|default:"" }}')" />
         <div class="user-info">
-          <p class="username" onclick="showUserProfile('{{ post.user.username }}', '{{ post.user.profile.profile_image.url }}', '{{ post.user.profile.bio|default:"" }}')">{{ post.user.username }}</p>
-          <p class="post-time">{{ post.created_at|timesince }} ago</p>
+          <p class="username" onclick="showUserProfile('{{ item.user.username }}', '{{ item.user.profile.profile_image.url }}', '{{ item.user.profile.bio|default:"" }}')">{{ item.user.username }}</p>
+          <p class="post-time">{{ item.created_at|timesince }} ago</p>
         </div>
       </div>
       
-      <p>{{ post.content }}</p>
+      <p>{{ item.content }}</p>
       
-      {% if post.image %}
-      <img src="{{ post.image.url }}" style="max-width: 100%; border-radius: 8px" />
+      {% if item.image %}
+      <img src="{{ item.image.url }}" style="max-width: 100%; border-radius: 8px" />
       {% endif %}
       
-      {% if post.video %}
+      {% if item.video %}
       <video controls style="max-width: 100%; border-radius: 8px; margin-top: 0.5rem">
-        <source src="{{ post.video.url }}" type="video/mp4" />
+        <source src="{{ item.video.url }}" type="video/mp4" />
         Your browser does not support the video tag.
       </video>
       {% endif %}
       
-      {% if post.user == request.user %}
+      {% if item.user == request.user %}
       <div style="margin-top: 0.5rem; display: flex; gap: 1rem; font-size: 0.9rem">
-        <a href="{% url 'edit_post' post.id %}" style="color: dodgerblue; text-decoration: none">✏️ Edit</a>
-        <form method="POST" action="{% url 'delete_post' post.id %}" style="display: inline">
+        <a href="{% url 'edit_post' item.id %}" style="color: dodgerblue; text-decoration: none">✏️ Edit</a>
+        <form method="POST" action="{% url 'delete_post' item.id %}" style="display: inline">
           {% csrf_token %}
           <button type="submit" onclick="return confirm('Are you sure?')" style="background: none; border: none; color: crimson; cursor: pointer;">
             🗑️ Delete
@@ -428,10 +431,10 @@
       {% endif %}
 
       <div class="post-actions">
-        <form method="POST" action="{% url 'like_post' post.id %}">
+        <form method="POST" action="{% url 'like_post' item.id %}">
           {% csrf_token %}
           <button type="submit" class="like-button">
-            {% if post.id in liked_post_ids %}
+            {% if item.id in liked_post_ids %}
               ❤️ Liked
             {% else %}
               🤍 Like
@@ -441,17 +444,69 @@
       </div>
 
       <div class="comments">
-        {% for comment in post.comments.all %}
+        {% for comment in item.comments.all %}
         <p><b>{{ comment.user.username }}</b>: {{ comment.content }}</p>
         {% endfor %}
         
-        <form method="POST" action="{% url 'comment_post' post.id %}">
+        <form method="POST" action="{% url 'comment_post' item.id %}">
           {% csrf_token %}
           <input name="comment" placeholder="Add comment..." />
           <button type="submit">Send</button>
         </form>
       </div>
     </div>
+    {% else %}
+    <!-- This is an Event -->
+    <div class="post-box" style="border-left: 4px solid #ffa500;">
+      <div class="post-header">
+        <img src="{{ item.organizer.profile.profile_image.url }}" alt="{{ item.organizer.username }}" onclick="showUserProfile('{{ item.organizer.username }}', '{{ item.organizer.profile.profile_image.url }}', '{{ item.organizer.profile.bio|default:"" }}')" />
+        <div class="user-info">
+          <p class="username" onclick="showUserProfile('{{ item.organizer.username }}', '{{ item.organizer.profile.profile_image.url }}', '{{ item.organizer.profile.bio|default:"" }}')">{{ item.organizer.username }}</p>
+          <p class="post-time">📅 {{ item.created_at|timesince }} ago</p>
+        </div>
+        <div style="margin-left: auto; color: #ffa500; font-weight: bold;">EVENT</div>
+      </div>
+      
+      <h3 style="color: #ffa500; margin: 0.5rem 0;">{{ item.title }}</h3>
+      <p>{{ item.description|truncatewords:30 }}</p>
+      
+      {% if item.photo %}
+      <img src="{{ item.photo.url }}" style="max-width: 100%; border-radius: 8px; margin: 0.5rem 0;" />
+      {% endif %}
+      
+      <div style="background: #2c2c2e; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+        <div style="display: flex; gap: 2rem; margin-bottom: 1rem;">
+          <div>
+            <span style="color: #ffa500;">📅</span>
+            <span>{{ item.event_date|date:"F j, Y" }} at {{ item.event_date|time:"g:i A" }}</span>
+          </div>
+          <div>
+            <span style="color: #ffa500;">📍</span>
+            <span>{{ item.venue_name }}</span>
+          </div>
+        </div>
+        <div style="display: flex; gap: 2rem; font-size: 0.9rem;">
+          <div>
+            <span style="color: #4caf50;">{{ item.get_interested_count }}</span> Interested
+          </div>
+          <div>
+            <span style="color: #ffa500;">{{ item.get_attending_count }}</span> Attending
+          </div>
+        </div>
+      </div>
+
+      <div class="post-actions">
+        <a href="{% url 'event_detail' item.id %}" style="background: #ffa500; color: black; padding: 0.5rem 1rem; border-radius: 6px; text-decoration: none; font-weight: bold;">
+          View Event Details
+        </a>
+        {% if user_event_responses|get_item:item.id %}
+          <span style="color: #4caf50; margin-left: 1rem;">
+            ✓ You're {{ user_event_responses|get_item:item.id }}
+          </span>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
     {% endfor %}
 
     <div class="pagination">

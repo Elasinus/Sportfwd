@@ -25,5 +25,9 @@ urlpatterns = [
     path('post/<int:post_id>/delete/', views.delete_post, name='delete_post'),
     path('inbox/', views.inbox, name='inbox'),
     path('chat/<str:username>/', views.chat_view, name='chat'),
+    path('event/create/', views.create_event, name='create_event'),
+    path('event/<int:event_id>/', views.event_detail, name='event_detail'),
+    path('event/<int:event_id>/respond/', views.respond_to_event, name='respond_to_event'),
+    path('event/<int:event_id>/responses/', views.event_responses, name='event_responses'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
