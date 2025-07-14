@@ -1,4 +1,7 @@
-{% extends 'base.html' %} {% load static %} {% block content %}
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
 <style>
   body {
     background-color: #000;
@@ -97,6 +100,44 @@
     position: relative;
   }
 
+  .post-header {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+  }
+
+  .post-header img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    cursor: pointer;
+  }
+
+  .post-header .user-info {
+    flex: 1;
+  }
+
+  .post-header .username {
+    font-weight: bold;
+    font-size: 1rem;
+    margin: 0;
+    cursor: pointer;
+    color: #ffa500;
+    transition: color 0.2s;
+  }
+
+  .post-header .username:hover {
+    color: #ff8c00;
+  }
+
+  .post-header .post-time {
+    color: #888;
+    font-size: 0.85rem;
+    margin: 0;
+  }
+
   .post-box img {
     max-width: 100%;
     border-radius: 8px;
@@ -145,6 +186,21 @@
     margin-top: 0.6rem;
   }
 
+  .like-button {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    min-width: 80px;
+    text-align: left;
+    padding: 0.5rem 0;
+    font-size: 0.9rem;
+  }
+
+  .like-button:hover {
+    opacity: 0.8;
+  }
+
   .dropdown {
     position: absolute;
     top: 10px;
@@ -191,6 +247,112 @@
     color: crimson;
   }
 
+  /* User Profile Dialog Styles */
+  .profile-dialog {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .profile-dialog-content {
+    background: #1f1f21;
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 400px;
+    width: 90%;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  }
+
+  .profile-dialog-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .profile-dialog-header img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .profile-dialog-header .user-info h3 {
+    margin: 0;
+    color: #ffa500;
+    font-size: 1.2rem;
+  }
+
+  .profile-dialog-header .user-info p {
+    margin: 0.2rem 0 0 0;
+    color: #888;
+    font-size: 0.9rem;
+  }
+
+  .profile-dialog-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .profile-dialog-actions button {
+    background: #2c2c2e;
+    border: none;
+    color: white;
+    padding: 0.8rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .profile-dialog-actions button:hover {
+    background: #444;
+  }
+
+  .profile-dialog-actions .message-btn {
+    background: #ffa500;
+    color: black;
+  }
+
+  .profile-dialog-actions .message-btn:hover {
+    background: #ff8c00;
+  }
+
+  .profile-dialog-actions .poke-btn {
+    background: #ff6b6b;
+  }
+
+  .profile-dialog-actions .poke-btn:hover {
+    background: #ff5252;
+  }
+
+  .close-dialog {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 1.5rem;
+    cursor: pointer;
+  }
+
+  .close-dialog:hover {
+    color: white;
+  }
+
   .pagination {
     display: flex;
     justify-content: center;
@@ -219,44 +381,12 @@
 <div class="feed-wrapper">
   <div class="feed-main">
     <div class="post-form">
-      <img
-        src="{{ profile.profile_image.url }}"
-        alt="Profile"
-        style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover"
-      />
-      <div
-        style="
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        "
-      >
-        <div
-          style="
-            flex: 1;
-            padding: 0.6rem 1rem;
-            border-radius: 20px;
-            background: #444;
-            color: #888;
-            cursor: pointer;
-          "
-          onclick="window.location.href='{% url 'create_post' %}'"
-        >
+      <img src="{{ profile.profile_image.url }}" alt="Profile" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover" />
+      <div style="flex: 1; display: flex; align-items: center; justify-content: space-between;">
+        <div style="flex: 1; padding: 0.6rem 1rem; border-radius: 20px; background: #444; color: #888; cursor: pointer;" onclick="window.location.href='{% url 'create_post' %}'">
           What's on your mind?
         </div>
-        <a
-          href="{% url 'create_post' %}"
-          style="
-            background: none;
-            border: none;
-            color: orangered;
-            font-weight: bold;
-            cursor: pointer;
-            text-decoration: none;
-            padding: 0.5rem 1rem;
-          "
-        >
+        <a href="{% url 'create_post' %}" style="background: none; border: none; color: orangered; font-weight: bold; cursor: pointer; text-decoration: none; padding: 0.5rem 1rem;">
           ✍️ Create Post
         </a>
       </div>
@@ -264,51 +394,33 @@
 
     {% for post in page_obj %}
     <div class="post-box">
-      <p><strong>{{ post.user.username }}</strong></p>
+      <div class="post-header">
+        <img src="{{ post.user.profile.profile_image.url }}" alt="{{ post.user.username }}" onclick="showUserProfile('{{ post.user.username }}', '{{ post.user.profile.profile_image.url }}', '{{ post.user.profile.bio|default:"" }}')" />
+        <div class="user-info">
+          <p class="username" onclick="showUserProfile('{{ post.user.username }}', '{{ post.user.profile.profile_image.url }}', '{{ post.user.profile.bio|default:"" }}')">{{ post.user.username }}</p>
+          <p class="post-time">{{ post.created_at|timesince }} ago</p>
+        </div>
+      </div>
+      
       <p>{{ post.content }}</p>
-
+      
       {% if post.image %}
-      <img
-        src="{{ post.image.url }}"
-        style="max-width: 100%; border-radius: 8px"
-      />
-      {% endif %} {% if post.video %}
-      <video
-        controls
-        style="max-width: 100%; border-radius: 8px; margin-top: 0.5rem"
-      >
+      <img src="{{ post.image.url }}" style="max-width: 100%; border-radius: 8px" />
+      {% endif %}
+      
+      {% if post.video %}
+      <video controls style="max-width: 100%; border-radius: 8px; margin-top: 0.5rem">
         <source src="{{ post.video.url }}" type="video/mp4" />
         Your browser does not support the video tag.
       </video>
       {% endif %}
-
-      <small>{{ post.created_at|timesince }} ago</small>
-
+      
       {% if post.user == request.user %}
-      <div
-        style="margin-top: 0.5rem; display: flex; gap: 1rem; font-size: 0.9rem"
-      >
-        <a
-          href="{% url 'edit_post' post.id %}"
-          style="color: dodgerblue; text-decoration: none"
-          >✏️ Edit</a
-        >
-        <form
-          method="POST"
-          action="{% url 'delete_post' post.id %}"
-          style="display: inline"
-        >
+      <div style="margin-top: 0.5rem; display: flex; gap: 1rem; font-size: 0.9rem">
+        <a href="{% url 'edit_post' post.id %}" style="color: dodgerblue; text-decoration: none">✏️ Edit</a>
+        <form method="POST" action="{% url 'delete_post' post.id %}" style="display: inline">
           {% csrf_token %}
-          <button
-            type="submit"
-            onclick="return confirm('Are you sure?')"
-            style="
-              background: none;
-              border: none;
-              color: crimson;
-              cursor: pointer;
-            "
-          >
+          <button type="submit" onclick="return confirm('Are you sure?')" style="background: none; border: none; color: crimson; cursor: pointer;">
             🗑️ Delete
           </button>
         </form>
@@ -318,12 +430,12 @@
       <div class="post-actions">
         <form method="POST" action="{% url 'like_post' post.id %}">
           {% csrf_token %}
-          <button
-            type="submit"
-            style="background: none; border: none; color: white"
-          >
-            {% if post.id in liked_post_ids %} ❤️ Liked {% else %} 🤍 Like {%
-            endif %}
+          <button type="submit" class="like-button">
+            {% if post.id in liked_post_ids %}
+              ❤️ Liked
+            {% else %}
+              🤍 Like
+            {% endif %}
           </button>
         </form>
       </div>
@@ -332,7 +444,7 @@
         {% for comment in post.comments.all %}
         <p><b>{{ comment.user.username }}</b>: {{ comment.content }}</p>
         {% endfor %}
-
+        
         <form method="POST" action="{% url 'comment_post' post.id %}">
           {% csrf_token %}
           <input name="comment" placeholder="Add comment..." />
@@ -340,15 +452,15 @@
         </form>
       </div>
     </div>
-    {% endif %} {% endfor %}
+    {% endfor %}
 
     <div class="pagination">
       {% if page_obj.has_previous %}
-      <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+        <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
       {% endif %}
       <span>Page {{ page_obj.number }}</span>
       {% if page_obj.has_next %}
-      <a href="?page={{ page_obj.next_page_number }}">Next</a>
+        <a href="?page={{ page_obj.next_page_number }}">Next</a>
       {% endif %}
     </div>
   </div>
@@ -358,6 +470,34 @@
     <div class="suggestion">🏀 Athlete Support Canada</div>
     <div class="suggestion">💼 Sports Branding Inc.</div>
     <div class="suggestion">📢 Campus Coaches Union</div>
+  </div>
+</div>
+
+<!-- User Profile Dialog -->
+<div id="profileDialog" class="profile-dialog">
+  <div class="profile-dialog-content">
+    <button class="close-dialog" onclick="closeUserProfile()">&times;</button>
+    <div class="profile-dialog-header">
+      <img id="dialogUserImage" src="" alt="User Profile" />
+      <div class="user-info">
+        <h3 id="dialogUsername"></h3>
+        <p id="dialogUserBio"></p>
+      </div>
+    </div>
+    <div class="profile-dialog-actions">
+      <button class="message-btn" onclick="messageUser()">
+        💬 Message
+      </button>
+      <button onclick="viewFullProfile()">
+        👤 View Full Profile
+      </button>
+      <button onclick="shareProfile()">
+        📤 Share Profile
+      </button>
+      <button class="poke-btn" onclick="pokeUser()">
+        👆 Poke
+      </button>
+    </div>
   </div>
 </div>
 
@@ -372,9 +512,83 @@
 
   document.addEventListener("click", function (e) {
     if (!e.target.closest(".dropdown")) {
-      document
-        .querySelectorAll(".dropdown-menu")
-        .forEach((m) => (m.style.display = "none"));
+      document.querySelectorAll(".dropdown-menu").forEach((m) => (m.style.display = "none"));
+    }
+  });
+
+  // User Profile Dialog Functions
+  function showUserProfile(username, imageUrl, bio) {
+    document.getElementById('dialogUsername').textContent = username;
+    document.getElementById('dialogUserImage').src = imageUrl;
+    document.getElementById('dialogUserBio').textContent = bio || 'No bio available';
+    document.getElementById('profileDialog').style.display = 'flex';
+  }
+
+  function closeUserProfile() {
+    document.getElementById('profileDialog').style.display = 'none';
+  }
+
+  function messageUser() {
+    const username = document.getElementById('dialogUsername').textContent;
+    // Redirect to inbox or create new message
+    window.location.href = `/inbox/?user=${username}`;
+  }
+
+  function viewFullProfile() {
+    const username = document.getElementById('dialogUsername').textContent;
+    // Redirect to user's full profile page
+    window.location.href = `/profile/${username}/`;
+  }
+
+  function shareProfile() {
+    const username = document.getElementById('dialogUsername').textContent;
+    const profileUrl = `${window.location.origin}/profile/${username}/`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: `${username}'s Profile`,
+        text: `Check out ${username}'s profile on Sportfwd!`,
+        url: profileUrl
+      });
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(profileUrl).then(() => {
+        alert('Profile link copied to clipboard!');
+      });
+    }
+  }
+
+  function pokeUser() {
+    const username = document.getElementById('dialogUsername').textContent;
+    // Send poke notification
+    fetch('/poke-user/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: JSON.stringify({
+        username: username
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert(`You poked ${username}!`);
+      } else {
+        alert('Failed to poke user.');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Failed to poke user.');
+    });
+  }
+
+  // Close dialog when clicking outside
+  document.getElementById('profileDialog').addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeUserProfile();
     }
   });
 </script>

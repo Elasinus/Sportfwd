@@ -60,6 +60,7 @@ class Message(models.Model):
     recipient = models.ForeignKey(User, related_name='received_messages', on_delete=models.CASCADE)
     content = models.TextField()
     timestamp = models.DateTimeField(default=timezone.now)
+    is_read = models.BooleanField(default=False)
 
     def __str__(self):
         return f"From {self.sender} to {self.recipient}"

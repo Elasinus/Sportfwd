@@ -8,6 +8,7 @@ from django.db import models
 from django.db.models import Q
 from .forms import LoginForm, RegisterForm
 from .models import Message,Post, Profile, Comment, Like, Follow, Notification
+from django.utils import timezone
 
 def home(request):
     if request.user.is_authenticated:
@@ -211,9 +212,116 @@ def delete_post(request, post_id):
 
 @login_required
 def inbox(request):
-    users = User.objects.exclude(id=request.user.id)
-    messages = Message.objects.filter(Q(sender=request.user) | Q(recipient=request.user))
-    return render(request, 'inbox.html', {'users': users, 'messages': messages})
+    # Get all users except current user
+    users = User.objects.exclude(id=request.user.id).prefetch_related('profile')
+    
+    # Get the selected user from query parameter
+    selected_user = request.GET.get('user')
+    other_user = None
+    messages = []
+    
+    if selected_user:
+        try:
+            other_user = User.objects.get(username=selected_user)
+            # Get messages between current user and selected user
+            messages = Message.objects.filter(
+                Q(sender=request.user, recipient=other_user) |
+                Q(sender=other_user, recipient=request.user)
+            ).order_by('timestamp')
+            
+            # Mark messages from other user as read
+            Message.objects.filter(
+                sender=other_user, 
+                recipient=request.user, 
+                is_read=False
+            ).update(is_read=True)
+        except User.DoesNotExist:
+            pass
+    
+    # Handle message sending
+    if request.method == 'POST' and other_user:
+        content = request.POST.get('content')
+        if content and content.strip():
+            Message.objects.create(
+                sender=request.user, 
+                recipient=other_user, 
+                content=content.strip()
+            )
+            # Redirect to same page to avoid form resubmission
+            return redirect(f'/inbox/?user={other_user.username}')
+    
+    # Get last message for each conversation and create user list
+    user_conversations = {}
+    for user in users:
+        last_message = Message.objects.filter(
+            Q(sender=request.user, recipient=user) |
+            Q(sender=user, recipient=request.user)
+        ).order_by('-timestamp').first()
+        
+        user_conversations[user] = {
+            'user': user,
+            'last_message': last_message,
+            'unread_count': Message.objects.filter(
+                sender=user, 
+                recipient=request.user, 
+                is_read=False
+            ).count() if hasattr(Message, 'is_read') else 0
+        }
+    
+    # Sort users: those with conversations first (by recent message), then others alphabetically
+    conversations = []
+    users_without_conversations = []
+    
+    for user, conv_data in user_conversations.items():
+        if conv_data['last_message']:
+            conversations.append(conv_data)
+        else:
+            users_without_conversations.append({
+                'user': user,
+                'last_message': None,
+                'unread_count': 0
+            })
+    
+    # Sort conversations by last message timestamp (most recent first)
+    conversations.sort(key=lambda x: x['last_message'].timestamp if x['last_message'] else timezone.now(), reverse=True)
+    
+    # Sort users without conversations alphabetically by name
+    users_without_conversations.sort(key=lambda x: x['user'].get_full_name() or x['user'].username)
+    
+    # Combine both lists
+    all_conversations = conversations + users_without_conversations
+    
+    # LOGGING: Print conversations data for debugging
+    print("=" * 50)
+    print("INBOX DEBUG LOG")
+    print("=" * 50)
+    print(f"Current user: {request.user.username}")
+    print(f"Selected user: {selected_user}")
+    print(f"Other user: {other_user.username if other_user else 'None'}")
+    print(f"Total conversations: {len(all_conversations)}")
+    print(f"Messages count: {len(messages)}")
+    print("\n--- CONVERSATIONS DATA ---")
+    for i, conv in enumerate(all_conversations):
+        user = conv['user']
+        last_msg = conv['last_message']
+        unread = conv['unread_count']
+        print(f"{i+1}. User: {user.username}")
+        print(f"   Full name: {user.get_full_name() or 'N/A'}")
+        print(f"   Last message: {last_msg.content if last_msg else 'No messages'}")
+        print(f"   Last message time: {last_msg.timestamp if last_msg else 'N/A'}")
+        print(f"   Unread count: {unread}")
+        print(f"   Has profile: {hasattr(user, 'profile')}")
+        if hasattr(user, 'profile'):
+            print(f"   Profile image: {user.profile.profile_image}")
+        print()
+    print("=" * 50)
+    
+    return render(request, 'inbox.html', {
+        'conversations': all_conversations,
+        'other_user': other_user,
+        'messages': messages,
+        'selected_user': selected_user
+    })
 
 
 @login_required
@@ -223,6 +331,13 @@ def chat_view(request, username):
         Q(sender=request.user, recipient=other_user) |
         Q(sender=other_user, recipient=request.user)
     ).order_by('timestamp')
+
+    # Mark messages from other user as read
+    Message.objects.filter(
+        sender=other_user, 
+        recipient=request.user, 
+        is_read=False
+    ).update(is_read=True)
 
     if request.method == 'POST':
         content = request.POST.get('content')
