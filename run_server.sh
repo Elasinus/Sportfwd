@@ -8,16 +8,6 @@ echo "🚀 Starting Sportfwd Django App with WebSocket Support..."
 # Set Django settings module
 export DJANGO_SETTINGS_MODULE=sportfwd.settings
 
-# Activate virtual environment
-echo "📦 Activating virtual environment..."
-source venv/bin/activate
-
-# Check if virtual environment is activated
-if [ $? -ne 0 ]; then
-    echo "❌ Error: Virtual environment not found. Please make sure 'venv' directory exists."
-    exit 1
-fi
-
 echo "✅ Virtual environment activated"
 
 # Run Daphne ASGI server
