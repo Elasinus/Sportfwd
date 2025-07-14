@@ -9,8 +9,6 @@
 
 {% block content %}
 
-<!-- DEBUG INFO -->
-
 <style>
   body {
     background-color: #000;
@@ -241,6 +239,10 @@
     color: white;
     font-size: 0.9rem;
     resize: none;
+    height: 40px;
+    min-height: 40px;
+    max-height: 40px;
+    overflow: hidden;
   }
 
   .message-input:focus {
@@ -442,87 +444,146 @@
     const textarea = form.querySelector(".message-input");
     const content = textarea.value.trim();
 
-    if (content) {
-      // Submit the form
+    if (content && chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+      // Send message via WebSocket
+      chatSocket.send(
+        JSON.stringify({
+          type: "message",
+          message: content,
+        })
+      );
+
+      // Clear the textarea
+      textarea.value = "";
+    } else if (content) {
+      // Fallback to form submission if WebSocket is not available
       form.submit();
     }
   }
 
-  // AJAX polling for new messages every 5 seconds
-  let lastMessageCount = 0;
-  let isPolling = false;
+  // Function to send message from textarea (for Enter key)
+  function sendMessageFromTextarea(textarea) {
+    const content = textarea.value.trim();
 
-  function startPolling() {
-    if (isPolling) return;
-    isPolling = true;
+    if (content && chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+      // Send message via WebSocket
+      chatSocket.send(
+        JSON.stringify({
+          type: "message",
+          message: content,
+        })
+      );
 
-    // Get initial message count
-    const messagesContainer = document.getElementById("messagesContainer");
-    if (messagesContainer) {
-      lastMessageCount = messagesContainer.children.length;
+      // Clear the textarea
+      textarea.value = "";
+    } else if (content) {
+      // Fallback to form submission if WebSocket is not available
+      const form = textarea.closest(".message-input-form");
+      if (form) {
+        form.submit();
+      }
     }
-
-    pollForNewMessages();
   }
 
-  function pollForNewMessages() {
-    if (!window.location.search.includes("user=")) {
-      isPolling = false;
+  // WebSocket connection for real-time messaging
+  let chatSocket = null;
+  let reconnectAttempts = 0;
+  const maxReconnectAttempts = 5;
+
+  function connectWebSocket() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const otherUser = urlParams.get("user");
+
+    if (!otherUser) {
       return;
     }
 
-    fetch(window.location.href)
-      .then((response) => response.text())
-      .then((html) => {
-        // Create a temporary div to parse the HTML
-        const tempDiv = document.createElement("div");
-        tempDiv.innerHTML = html;
+    // Close existing connection if any
+    if (chatSocket) {
+      chatSocket.close();
+    }
 
-        // Find the messages container in the fetched HTML
-        const newMessagesContainer =
-          tempDiv.querySelector("#messagesContainer");
-        const currentMessagesContainer =
-          document.getElementById("messagesContainer");
+    // Create WebSocket connection
+    const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+    const wsUrl = `${wsScheme}://${window.location.host}/ws/chat/${otherUser}/`;
 
-        if (newMessagesContainer && currentMessagesContainer) {
-          const newMessageCount = newMessagesContainer.children.length;
+    chatSocket = new WebSocket(wsUrl);
 
-          // Only update if there are new messages
-          if (newMessageCount > lastMessageCount) {
-            // Replace the messages container content
-            currentMessagesContainer.innerHTML = newMessagesContainer.innerHTML;
-            lastMessageCount = newMessageCount;
+    chatSocket.onopen = function (e) {
+      console.log("WebSocket connected");
+      reconnectAttempts = 0;
+    };
 
-            // Scroll to bottom after new messages
-            scrollToBottom();
-          }
-        }
-      })
-      .catch((error) => {
-        console.log("Polling error:", error);
-      })
-      .finally(() => {
-        // Schedule next poll
-        setTimeout(pollForNewMessages, 5000);
-      });
+    chatSocket.onmessage = function (e) {
+      const data = JSON.parse(e.data);
+
+      if (data.type === "message") {
+        // Add new message to the chat
+        addMessageToChat(data);
+      }
+    };
+
+    chatSocket.onclose = function (e) {
+      console.log("WebSocket disconnected");
+
+      // Attempt to reconnect if not at max attempts
+      if (reconnectAttempts < maxReconnectAttempts) {
+        reconnectAttempts++;
+        console.log(`Reconnecting... Attempt ${reconnectAttempts}`);
+        setTimeout(connectWebSocket, 2000);
+      }
+    };
+
+    chatSocket.onerror = function (e) {
+      console.error("WebSocket error:", e);
+    };
   }
 
-  // Start polling when page loads
+  function addMessageToChat(data) {
+    const messagesContainer = document.getElementById("messagesContainer");
+    if (!messagesContainer) return;
+
+    // Create message element
+    const messageDiv = document.createElement("div");
+    messageDiv.className = `message ${
+      data.sender_username === "{{ request.user.username }}"
+        ? "sent"
+        : "received"
+    }`;
+
+    const timestamp = new Date(data.timestamp);
+    const timeString = timestamp.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    messageDiv.innerHTML = `
+      <div class="message-content">
+        <p>${data.message}</p>
+        <div class="message-time">${timeString}</div>
+      </div>
+    `;
+
+    messagesContainer.appendChild(messageDiv);
+    scrollToBottom();
+  }
+
+  // Connect WebSocket when user changes
+  function handleUserChange() {
+    connectWebSocket();
+  }
+
+  // Start WebSocket when page loads
   document.addEventListener("DOMContentLoaded", function () {
     const textarea = document.querySelector(".message-input");
     const form = document.querySelector(".message-input-form");
 
     if (textarea) {
-      textarea.addEventListener("input", function () {
-        this.style.height = "auto";
-        this.style.height = Math.min(this.scrollHeight, 100) + "px";
-      });
-
       // Handle Enter key
       textarea.addEventListener("keydown", function (event) {
-        if (event.keyCode === 13 && !event.shiftKey) {
+        if (event.key === "Enter" && !event.shiftKey) {
           event.preventDefault();
-          sendMessage(event);
+          sendMessageFromTextarea(this);
         }
       });
     }
@@ -534,8 +595,8 @@
     // Scroll to bottom on page load
     scrollToBottom();
 
-    // Start polling for new messages
-    startPolling();
+    // Connect to WebSocket for real-time messaging
+    connectWebSocket();
   });
 </script>
 {% endblock %}

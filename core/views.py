@@ -291,30 +291,7 @@ def inbox(request):
     # Combine both lists
     all_conversations = conversations + users_without_conversations
     
-    # LOGGING: Print conversations data for debugging
-    print("=" * 50)
-    print("INBOX DEBUG LOG")
-    print("=" * 50)
-    print(f"Current user: {request.user.username}")
-    print(f"Selected user: {selected_user}")
-    print(f"Other user: {other_user.username if other_user else 'None'}")
-    print(f"Total conversations: {len(all_conversations)}")
-    print(f"Messages count: {len(messages)}")
-    print("\n--- CONVERSATIONS DATA ---")
-    for i, conv in enumerate(all_conversations):
-        user = conv['user']
-        last_msg = conv['last_message']
-        unread = conv['unread_count']
-        print(f"{i+1}. User: {user.username}")
-        print(f"   Full name: {user.get_full_name() or 'N/A'}")
-        print(f"   Last message: {last_msg.content if last_msg else 'No messages'}")
-        print(f"   Last message time: {last_msg.timestamp if last_msg else 'N/A'}")
-        print(f"   Unread count: {unread}")
-        print(f"   Has profile: {hasattr(user, 'profile')}")
-        if hasattr(user, 'profile'):
-            print(f"   Profile image: {user.profile.profile_image}")
-        print()
-    print("=" * 50)
+
     
     return render(request, 'inbox.html', {
         'conversations': all_conversations,
